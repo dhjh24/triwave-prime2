@@ -23,8 +23,13 @@ export async function printifyFetch({ endpoint, method = 'GET', body }) {
     rateLimit();
 
     const apiUrl = 'https://api.printify.com/v1';
-    const apiKey = import.meta.env.VITE_PRINTIFY_API_KEY;
-    const shopId = import.meta.env.VITE_PRINTIFY_SHOP_ID;
+    // Use process.env for server-side, fallback to import.meta.env for client-side
+    const apiKey = process.env.VITE_PRINTIFY_API_KEY || import.meta.env.VITE_PRINTIFY_API_KEY;
+    const shopId = process.env.VITE_PRINTIFY_SHOP_ID || import.meta.env.VITE_PRINTIFY_SHOP_ID;
+    
+    if (!apiKey || !shopId) {
+      throw new Error('Printify API key and shop ID must be configured');
+    }
 
     // Replace {shop_id} placeholder with actual shop ID
     const processedEndpoint = endpoint.replace('{shop_id}', shopId);
