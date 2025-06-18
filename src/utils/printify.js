@@ -1,77 +1,99 @@
+// This file contains server-side only code for interacting with the Printify API
+// All functions must be called from server-side code only
+
+// Rate limiting configuration
 const RATE_LIMIT_WINDOW = 60000; // 60 seconds in ms
 const MAX_REQUESTS = 600;
-const requests = [];
+const requests = new Map();
 
-// Rate limiting middleware
-function rateLimit() {
+/**
+ * Rate limiting middleware
+ * @param {string} shopId - Shop ID for rate limiting
+ */
+function rateLimit(shopId) {
   const now = Date.now();
-  // Remove old requests in-place
-  while (requests.length && now - requests[0] >= RATE_LIMIT_WINDOW) {
-    requests.shift();
+  const shopRequests = requests.get(shopId) || [];
+  
+  // Remove old requests
+  while (shopRequests.length && now - shopRequests[0] >= RATE_LIMIT_WINDOW) {
+    shopRequests.shift();
   }
-  if (requests.length >= MAX_REQUESTS) {
-    const oldestRequest = requests[0];
+  
+  if (shopRequests.length >= MAX_REQUESTS) {
+    const oldestRequest = shopRequests[0];
     const waitTime = RATE_LIMIT_WINDOW - (now - oldestRequest);
-    throw new Error(`Rate limit exceeded. Please wait ${Math.ceil(waitTime / 1000)} seconds`);
+    throw new Error(`Rate limit exceeded for shop ${shopId}. Please wait ${Math.ceil(waitTime / 1000)} seconds`);
   }
-  requests.push(now);
+  
+  shopRequests.push(now);
+  requests.set(shopId, shopRequests);
 }
 
 /**
  * Make API requests to Printify
  * @param {Object} options - Request options
- * @param {string} options.endpoint - API endpoint
+ * @param {string} options.endpoint - API endpoint (e.g., '/shops/{shop_id}/products.json')
  * @param {'GET'|'POST'|'PUT'|'DELETE'} [options.method='GET'] - HTTP method
- * @param {Object} [options.body] - Request body
- * @returns {Promise<Object>} - Response data
+ * @param {Object} [options.body] - Request body (will be JSON.stringified)
+ * @param {string} [options.shopId] - Optional shop ID override
+ * @returns {Promise<{status: number, body: any}>} - Response data
+ * @throws {Error} If the request fails or rate limit is exceeded
  */
-export async function printifyFetch({ endpoint, method = 'GET', body }) {
+export async function printifyFetch({ endpoint, method = 'GET', body, shopId: providedShopId }) {
+  // Get environment variables (works in both Vercel and local development)
+  const apiKey = process.env.VITE_PRINTIFY_API_KEY || 
+                process.env.PRINTIFY_API_KEY;
+                
+  const shopId = providedShopId || 
+                process.env.VITE_PRINTIFY_SHOP_ID || 
+                process.env.PRINTIFY_SHOP_ID;
+
+  // Validate required configuration
+  if (!apiKey || !shopId) {
+    const error = new Error('Printify API key and shop ID must be configured');
+    error.code = 'MISSING_CONFIGURATION';
+    throw error;
+  }
+
+  // Apply rate limiting per shop
+  rateLimit(shopId);
+
+  const apiUrl = 'https://api.printify.com/v1';
+  const processedEndpoint = endpoint.replace('{shop_id}', shopId);
+  const url = new URL(processedEndpoint, apiUrl);
+
   try {
-    // Check rate limit
-    rateLimit();
-
-    const apiUrl = 'https://api.printify.com/v1';
-    
-    // For Vercel deployment, use process.env
-    // For local development, use import.meta.env
-    const apiKey = process.env.VITE_PRINTIFY_API_KEY || 
-                  import.meta.env.VITE_PRINTIFY_API_KEY ||
-                  process.env.PRINTIFY_API_KEY;
-                  
-    const shopId = process.env.VITE_PRINTIFY_SHOP_ID || 
-                  import.meta.env.VITE_PRINTIFY_SHOP_ID ||
-                  process.env.PRINTIFY_SHOP_ID;
-    
-    if (!apiKey || !shopId) {
-      console.error('Printify API key or shop ID is missing');
-      throw new Error('Printify API key and shop ID must be configured');
-    }
-
-    // Replace {shop_id} placeholder with actual shop ID
-    const processedEndpoint = endpoint.replace('{shop_id}', shopId);
-
-    const response = await fetch(`${apiUrl}${processedEndpoint}`, {
+    const response = await fetch(url.toString(), {
       method,
       headers: {
         'Content-Type': 'application/json;charset=utf-8',
         'Authorization': `Bearer ${apiKey}`,
-        'User-Agent': 'SvelteKit Commerce' // Required by Printify API
+        'User-Agent': 'SvelteKit Commerce/1.0',
+        'Accept': 'application/json',
       },
       body: body ? JSON.stringify(body) : undefined,
     });
 
+    const data = await response.json().catch(() => ({}));
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Printify API Error: ${response.status} - ${errorData.message || 'Unknown error'}`);
+      const error = new Error(data.message || 'Printify API request failed');
+      error.status = response.status;
+      error.details = data;
+      throw error;
     }
 
-    const result = await response.json();
     return {
       status: response.status,
-      body: result // Return raw result instead of wrapping in data
+      body: data
     };
   } catch (error) {
-    console.error('Printify API Error:', error);
+    console.error('Printify API Error:', {
+      endpoint: processedEndpoint,
+      method,
+      error: error.message,
+      status: error.status,
+    });
     throw error;
   }
 }
