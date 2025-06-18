@@ -1,8 +1,8 @@
-import { getProduct, getAllProducts } from '$utils/printify';
+import { getProduct, getProducts } from '$utils/printify';
 import { error } from '@sveltejs/kit';
 
 export async function load({ params }) {
-  const [resOne, resTwo] = await Promise.all([getProduct(params.handle), getAllProducts()]);
+  const [resOne, resTwo] = await Promise.all([getProduct(params.handle), getProducts()]);
 
   if (resOne.status === 200 && resTwo.status === 200) {
     const product = resOne.body?.data?.productByHandle;
