@@ -1,32 +1,52 @@
-// This file contains server-side only code for interacting with the Printify API
-// All functions must be called from server-side code only
+import { error } from '@sveltejs/kit';
+import { printifyConfig } from './env';
 
-// Rate limiting configuration
-const RATE_LIMIT_WINDOW = 60000; // 60 seconds in ms
-const MAX_REQUESTS = 600;
-const requests = new Map();
+// Rate limiting configuration (30 requests per minute per shop)
+const RATE_LIMIT = {
+  windowMs: 60 * 1000, // 1 minute
+  max: 30, // Max requests per windowMs
+};
+
+// Track rate limits per shop
+const rateLimits = new Map();
 
 /**
- * Rate limiting middleware
- * @param {string} shopId - Shop ID for rate limiting
+ * Simple in-memory rate limiter
  */
-function rateLimit(shopId) {
-  const now = Date.now();
-  const shopRequests = requests.get(shopId) || [];
+function rateLimit(limitConfig) {
+  const requests = [];
   
-  // Remove old requests
-  while (shopRequests.length && now - shopRequests[0] >= RATE_LIMIT_WINDOW) {
-    shopRequests.shift();
+  return {
+    check() {
+      const now = Date.now();
+      
+      // Remove old requests outside the time window
+      while (requests.length && now - requests[0] >= limitConfig.windowMs) {
+        requests.shift();
+      }
+      
+      // Check if we've exceeded the limit
+      if (requests.length >= limitConfig.max) {
+        return false;
+      }
+      
+      // Add current timestamp
+      requests.push(now);
+      return true;
+    }
+  };
+}
+
+/**
+ * Get rate limiter for a specific shop
+ * @param {string} shopId - The Printify shop ID
+ * @returns {Object} Rate limiter instance
+ */
+function getRateLimiter(shopId) {
+  if (!rateLimits.has(shopId)) {
+    rateLimits.set(shopId, rateLimit(RATE_LIMIT));
   }
-  
-  if (shopRequests.length >= MAX_REQUESTS) {
-    const oldestRequest = shopRequests[0];
-    const waitTime = RATE_LIMIT_WINDOW - (now - oldestRequest);
-    throw new Error(`Rate limit exceeded for shop ${shopId}. Please wait ${Math.ceil(waitTime / 1000)} seconds`);
-  }
-  
-  shopRequests.push(now);
-  requests.set(shopId, shopRequests);
+  return rateLimits.get(shopId);
 }
 
 /**
@@ -40,29 +60,25 @@ function rateLimit(shopId) {
  * @throws {Error} If the request fails or rate limit is exceeded
  */
 export async function printifyFetch({ endpoint, method = 'GET', body, shopId: providedShopId }) {
-  // Get environment variables (works in both Vercel and local development)
-  const apiKey = process.env.VITE_PRINTIFY_API_KEY || 
-                process.env.PRINTIFY_API_KEY;
-                
-  const shopId = providedShopId || 
-                process.env.VITE_PRINTIFY_SHOP_ID || 
-                process.env.PRINTIFY_SHOP_ID;
-
-  // Validate required configuration
-  if (!apiKey || !shopId) {
-    const error = new Error('Printify API key and shop ID must be configured');
-    error.code = 'MISSING_CONFIGURATION';
-    throw error;
-  }
-
-  // Apply rate limiting per shop
-  rateLimit(shopId);
-
-  const apiUrl = 'https://api.printify.com/v1';
-  const processedEndpoint = endpoint.replace('{shop_id}', shopId);
-  const url = new URL(processedEndpoint, apiUrl);
-
   try {
+    // Get API key and shop ID from environment
+    const apiKey = printifyConfig.apiKey;
+    const shopId = providedShopId || printifyConfig.shopId;
+    
+    // Get rate limiter for this shop
+    const limiter = getRateLimiter(shopId);
+    
+    // Check rate limit
+    if (!limiter.check()) {
+      throw new Error('Rate limit exceeded. Please try again later.');
+    }
+    
+    // Process endpoint and create URL
+    const processedEndpoint = endpoint.replace('{shop_id}', shopId);
+    const url = new URL(processedEndpoint, printifyConfig.baseUrl);
+
+    console.log(`[Printify API] ${method} ${url}`);
+    
     const response = await fetch(url.toString(), {
       method,
       headers: {
