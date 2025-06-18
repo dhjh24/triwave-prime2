@@ -1,4 +1,4 @@
-import { getAllProducts } from '$utils/shopify';
+import { getAllProducts } from '$utils/printify';
 import { error } from '@sveltejs/kit';
 
 export async function load() {

@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import { loadCart } from '$utils/shopify';
+import { loadCart } from '$utils/printify';
 
 export const cartQuantity = writable('');
 export const cart = writable([]);
@@ -9,14 +9,14 @@ export const getCartItems = async () => {
   let cartId = JSON.parse(localStorage.getItem('cartId'));
 
   try {
-    const shopifyResponse = await loadCart(cartId);
+    const printifyResponse = await loadCart(cartId);
 
     let sum = 0;
-    shopifyResponse.body?.data?.cart?.lines?.edges?.forEach((d) => {
+    printifyResponse.body?.data?.cart?.lines?.edges?.forEach((d) => {
       sum += d.node.quantity;
     });
     cartQuantity.set(sum);
-    return shopifyResponse;
+    return printifyResponse;
   } catch (error) {
     console.log(error);
   }
