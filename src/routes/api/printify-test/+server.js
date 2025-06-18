@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { printifyConfig } from '$utils/printify';
+import { printifyConfig } from '$utils/env';
 
 /** @type {import('./$types').RequestHandler} */
 export async function GET() {

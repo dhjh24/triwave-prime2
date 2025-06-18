@@ -60,18 +60,25 @@
 
 <div
   class="absolute inset-0 z-50 flex max-h-screen w-full justify-end overflow-hidden bg-black/50"
-  onclick={closeCart}
-  onkeydown={handleKeyDown}
   role="dialog"
-  aria-label="Shopping Cart"
-  tabindex="0"
+  aria-modal="true"
+  aria-labelledby="cart-title"
+  on:click={closeCart}
+  on:keydown={handleKeyDown}
+  tabindex="-1"
+  data-testid="cart-overlay"
 >
-  <div class="z-50 w-full bg-black p-6 md:w-1/2 lg:w-1/3 relative">
+  <div
+    class="z-50 w-full bg-black p-6 md:w-1/2 lg:w-1/3 relative"
+    role="document"
+    on:click|stopPropagation
+    data-testid="cart-content"
+  >
     {#if loading}
       <div class="absolute inset-0 bg-black/50 z-50"></div>
     {/if}
     <div class="mb-6 flex w-full items-center justify-between">
-      <div class="text-2xl font-medium">My Cart</div>
+      <h2 id="cart-title" class="text-2xl font-medium">My Cart</h2>
       <button onclick={closeCart} class="text-sm uppercase opacity-80 hover:opacity-100">close</button>
     </div>
     {#if items.length === 0}
