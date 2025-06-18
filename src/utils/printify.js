@@ -17,17 +17,33 @@ function rateLimit() {
   requests.push(now);
 }
 
+/**
+ * Make API requests to Printify
+ * @param {Object} options - Request options
+ * @param {string} options.endpoint - API endpoint
+ * @param {'GET'|'POST'|'PUT'|'DELETE'} [options.method='GET'] - HTTP method
+ * @param {Object} [options.body] - Request body
+ * @returns {Promise<Object>} - Response data
+ */
 export async function printifyFetch({ endpoint, method = 'GET', body }) {
   try {
     // Check rate limit
     rateLimit();
 
     const apiUrl = 'https://api.printify.com/v1';
-    // Use process.env for server-side, fallback to import.meta.env for client-side
-    const apiKey = process.env.VITE_PRINTIFY_API_KEY || import.meta.env.VITE_PRINTIFY_API_KEY;
-    const shopId = process.env.VITE_PRINTIFY_SHOP_ID || import.meta.env.VITE_PRINTIFY_SHOP_ID;
+    
+    // For Vercel deployment, use process.env
+    // For local development, use import.meta.env
+    const apiKey = process.env.VITE_PRINTIFY_API_KEY || 
+                  import.meta.env.VITE_PRINTIFY_API_KEY ||
+                  process.env.PRINTIFY_API_KEY;
+                  
+    const shopId = process.env.VITE_PRINTIFY_SHOP_ID || 
+                  import.meta.env.VITE_PRINTIFY_SHOP_ID ||
+                  process.env.PRINTIFY_SHOP_ID;
     
     if (!apiKey || !shopId) {
+      console.error('Printify API key or shop ID is missing');
       throw new Error('Printify API key and shop ID must be configured');
     }
 
