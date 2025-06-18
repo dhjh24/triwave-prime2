@@ -10,7 +10,7 @@
       isLoading = true;
       error = null;
       
-      const response = await fetch('/api/printify/test');
+      const response = await fetch('/api/printify-test');
       testResult = await response.json();
       
       if (!response.ok) {
@@ -48,13 +48,13 @@
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
             </svg>
           </div>
-          <div class="ml-3">
+          <div class="ml-3 space-y-2">
             <p class="text-sm text-red-700">
               {error.message}
-              {#if error.details}
-                <pre class="mt-2 text-xs text-red-600 overflow-auto">{JSON.stringify(error.details, null, 2)}</pre>
-              {/if}
             </p>
+            {#if error.details}
+              <pre class="text-xs text-red-600 overflow-auto bg-red-50 p-2 rounded">{JSON.stringify(error.details, null, 2)}</pre>
+            {/if}
           </div>
         </div>
       </div>
@@ -73,13 +73,13 @@
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
             </svg>
           </div>
-          <div class="ml-3">
+          <div class="ml-3 space-y-2">
             <p class="text-sm text-green-700">
               {testResult.message}
-              {#if testResult.config}
-                <pre class="mt-2 text-xs text-green-600 overflow-auto">{JSON.stringify(testResult.config, null, 2)}</pre>
-              {/if}
             </p>
+            {#if testResult.config}
+              <pre class="text-xs text-green-600 overflow-auto bg-green-50 p-2 rounded">{JSON.stringify(testResult.config, null, 2)}</pre>
+            {/if}
           </div>
         </div>
       </div>
@@ -88,7 +88,7 @@
         <h2 class="text-lg font-medium text-gray-900 mb-2">Next Steps</h2>
         <ul class="list-disc pl-5 space-y-1 text-sm text-gray-600">
           <li>Check the browser console for API request logs</li>
-          <li>Try accessing the <a href="/api/printify/test" class="text-blue-600 hover:underline" target="_blank" rel="noopener">test endpoint</a> directly</li>
+          <li>Try accessing the <a href="/api/printify-test" class="text-blue-600 hover:underline" target="_blank" rel="noopener">test endpoint</a> directly</li>
           <li>Review your environment variables in Vercel or .env file</li>
         </ul>
       </div>
