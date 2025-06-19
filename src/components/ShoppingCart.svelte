@@ -43,7 +43,13 @@
   async function checkout() {
     loading = true;
     let checkoutUrl = localStorage.getItem('cartUrl');
-    window.open(JSON.parse(checkoutUrl), '_blank');
+    let url;
+    try {
+      url = JSON.parse(checkoutUrl);
+    } catch {
+      url = '';
+    }
+    if (url) window.open(url, '_blank');
     loading = false;
   }
 

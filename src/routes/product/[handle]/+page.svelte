@@ -38,7 +38,12 @@
     let cartId;
 
     if (typeof window !== 'undefined') {
-      cartId = JSON.parse(localStorage.getItem('cartId'));
+      try {
+        const raw = localStorage.getItem('cartId');
+        cartId = raw ? JSON.parse(raw) : null;
+      } catch {
+        cartId = null;
+      }
     }
 
     data.body.product.variants.edges.forEach((variant) => {

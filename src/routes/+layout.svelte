@@ -19,8 +19,18 @@
   onMount(async () => {
     if (typeof window !== 'undefined') {
       cartId = JSON.parse(localStorage.getItem('cartId'));
-      cartCreatedAt = JSON.parse(localStorage.getItem('cartCreatedAt'));
-      checkoutUrl = JSON.parse(localStorage.getItem('cartUrl'));
+      try {
+        const raw = localStorage.getItem('cartCreatedAt');
+        cartCreatedAt = raw ? JSON.parse(raw) : null;
+      } catch {
+        cartCreatedAt = null;
+      }
+      try {
+        const raw = localStorage.getItem('cartUrl');
+        checkoutUrl = raw ? JSON.parse(raw) : null;
+      } catch {
+        checkoutUrl = null;
+      }
 
       let currentDate = Date.now();
       let difference = currentDate - cartCreatedAt;
