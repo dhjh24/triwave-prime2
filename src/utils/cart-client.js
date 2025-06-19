@@ -5,7 +5,7 @@
 
 export async function createCart() {
   try {
-    const response = await fetch('/api/cart', {
+    const response = await fetch('/api/cart/', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -25,7 +25,7 @@ export async function createCart() {
 
 export async function loadCart(cartId) {
   try {
-    const response = await fetch(`/api/cart/${cartId}`, {
+    const response = await fetch(`/api/cart/${cartId}/`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -45,7 +45,7 @@ export async function loadCart(cartId) {
 
 export async function addToCart(cartId, variantId, quantity = 1) {
   try {
-    const response = await fetch(`/api/cart/${cartId}`, {
+    const response = await fetch(`/api/cart/${cartId}/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -66,7 +66,7 @@ export async function addToCart(cartId, variantId, quantity = 1) {
 
 export async function updateCart(cartId, lines) {
   try {
-    const response = await fetch(`/api/cart/${cartId}`, {
+    const response = await fetch(`/api/cart/${cartId}/`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -87,7 +87,7 @@ export async function updateCart(cartId, lines) {
 
 export async function deleteCart(cartId) {
   try {
-    const response = await fetch(`/api/cart/${cartId}`, {
+    const response = await fetch(`/api/cart/${cartId}/`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

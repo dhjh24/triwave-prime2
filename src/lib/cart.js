@@ -9,7 +9,7 @@
  */
 export async function createCart() {
   try {
-    const response = await fetch('/api/cart', {
+    const response = await fetch('/api/cart/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -35,7 +35,7 @@ export async function createCart() {
  */
 export async function getCart(cartId) {
   try {
-    const response = await fetch(`/api/cart/${cartId}`);
+    const response = await fetch(`/api/cart/${cartId}/`);
     
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
@@ -58,7 +58,7 @@ export async function getCart(cartId) {
  */
 export async function addCartItem(cartId, variantId, quantity = 1) {
   try {
-    const response = await fetch(`/api/cart/${cartId}`, {
+    const response = await fetch(`/api/cart/${cartId}/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -86,7 +86,7 @@ export async function addCartItem(cartId, variantId, quantity = 1) {
  */
 export async function updateCartItems(cartId, lines) {
   try {
-    const response = await fetch(`/api/cart/${cartId}`, {
+    const response = await fetch(`/api/cart/${cartId}/`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -113,7 +113,7 @@ export async function updateCartItems(cartId, lines) {
  */
 export async function removeCart(cartId) {
   try {
-    const response = await fetch(`/api/cart/${cartId}`, {
+    const response = await fetch(`/api/cart/${cartId}/`, {
       method: 'DELETE',
     });
     

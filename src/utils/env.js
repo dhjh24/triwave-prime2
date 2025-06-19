@@ -3,31 +3,32 @@
  * Works in both server and client contexts
  */
 // SvelteKit server-side environment configuration for Printify integration
-import { PRINTIFY_API_KEY, PRINTIFY_SHOP_ID } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 
 export const printifyConfig = {
   get apiKey() {
-    if (!PRINTIFY_API_KEY) {
-      throw new Error('Missing PRINTIFY_API_KEY in environment. Set this in your .env file (no VITE_ prefix).');
+    const apiKey = env.PRINTIFY_API_KEY || env.VITE_PRINTIFY_API_KEY;
+    if (!apiKey) {
+      throw new Error('Missing PRINTIFY_API_KEY in environment. Set either PRINTIFY_API_KEY or VITE_PRINTIFY_API_KEY in your .env file.');
     }
-    return PRINTIFY_API_KEY;
+    return apiKey;
   },
   get shopId() {
-    if (!PRINTIFY_SHOP_ID) {
-      throw new Error('Missing PRINTIFY_SHOP_ID in environment. Set this in your .env file (no VITE_ prefix).');
+    const shopId = env.PRINTIFY_SHOP_ID || env.VITE_PRINTIFY_SHOP_ID;
+    if (!shopId) {
+      throw new Error('Missing PRINTIFY_SHOP_ID in environment. Set either PRINTIFY_SHOP_ID or VITE_PRINTIFY_SHOP_ID in your .env file.');
     }
-    return PRINTIFY_SHOP_ID;
+    return shopId;
   },
   get baseUrl() {
-    return 'https://api.printify.com/v1';
+    return 'https://api.printify.com';
   }
 };
 
 // Optionally, log status in development (server-side only)
 if (process.env.NODE_ENV === 'development') {
   console.log('Printify env status:', {
-    PRINTIFY_API_KEY: PRINTIFY_API_KEY ? '***' : 'Not set',
-    PRINTIFY_SHOP_ID: PRINTIFY_SHOP_ID || 'Not set',
+    PRINTIFY_API_KEY: (env.PRINTIFY_API_KEY || env.VITE_PRINTIFY_API_KEY) ? '***' : 'Not set',
+    PRINTIFY_SHOP_ID: env.PRINTIFY_SHOP_ID || env.VITE_PRINTIFY_SHOP_ID || 'Not set',
   });
 }
-
