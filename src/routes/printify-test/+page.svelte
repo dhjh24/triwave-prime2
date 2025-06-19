@@ -10,7 +10,7 @@
       isLoading = true;
       error = null;
       
-      const response = await fetch('/api/printify-test');
+      const response = await fetch('/api/test/printify');
       testResult = await response.json();
       
       if (!response.ok) {
@@ -88,7 +88,7 @@
         <h2 class="text-lg font-medium text-gray-900 mb-2">Next Steps</h2>
         <ul class="list-disc pl-5 space-y-1 text-sm text-gray-600">
           <li>Check the browser console for API request logs</li>
-          <li>Try accessing the <a href="/api/printify-test" class="text-blue-600 hover:underline" target="_blank" rel="noopener">test endpoint</a> directly</li>
+          <li>Try accessing the <a href="/api/test/printify" class="text-blue-600 hover:underline" target="_blank" rel="noopener">test endpoint</a> directly</li>
           <li>Review your environment variables in Vercel or .env file</li>
         </ul>
       </div>

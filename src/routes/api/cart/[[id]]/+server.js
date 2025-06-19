@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { createCart, loadCart, addToCart, updateCart, deleteCart } from '$utils/printify-server';
+import { createCart, loadCart, addToCart, updateCart, deleteCart } from '$utils/local-cart';
 
 // Handle all cart operations
 /** @type {import('./$types').RequestHandler} */
@@ -9,14 +9,15 @@ export async function GET({ params, url }) {
   try {
     if (id) {
       // Get specific cart
-      const response = await loadCart(id);
-      return json(response);
+      const response = loadCart(id);
+      return json(response.body, { status: response.status });
     } else {
       // Create new cart
-      const response = await createCart();
-      return json(response);
+      const response = createCart();
+      return json(response.body, { status: response.status });
     }
   } catch (error) {
+    console.error('Cart GET error:', error);
     return json({ error: error.message }, { status: 500 });
   }
 }
@@ -24,16 +25,18 @@ export async function GET({ params, url }) {
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ request, params }) {
   const { id } = params;
-  const { variantId, quantity } = await request.json();
-
+  
   try {
+    const { variantId, quantity } = await request.json();
+
     if (!id) {
       return json({ error: 'Cart ID is required' }, { status: 400 });
     }
 
-    const response = await addToCart(id, variantId, quantity);
-    return json(response);
+    const response = addToCart(id, variantId, quantity);
+    return json(response.body, { status: response.status });
   } catch (error) {
+    console.error('Cart POST error:', error);
     return json({ error: error.message }, { status: 500 });
   }
 }
@@ -41,16 +44,18 @@ export async function POST({ request, params }) {
 /** @type {import('./$types').RequestHandler} */
 export async function PUT({ request, params }) {
   const { id } = params;
-  const { lines } = await request.json();
-
+  
   try {
+    const { lines } = await request.json();
+
     if (!id) {
       return json({ error: 'Cart ID is required' }, { status: 400 });
     }
 
-    const response = await updateCart(id, lines);
-    return json(response);
+    const response = updateCart(id, lines);
+    return json(response.body, { status: response.status });
   } catch (error) {
+    console.error('Cart PUT error:', error);
     return json({ error: error.message }, { status: 500 });
   }
 }
@@ -64,9 +69,10 @@ export async function DELETE({ params }) {
       return json({ error: 'Cart ID is required' }, { status: 400 });
     }
 
-    const response = await deleteCart(id);
-    return json(response);
+    const response = deleteCart(id);
+    return json(response.body, { status: response.status });
   } catch (error) {
+    console.error('Cart DELETE error:', error);
     return json({ error: error.message }, { status: 500 });
   }
 }
