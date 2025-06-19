@@ -58,20 +58,29 @@
   }
 </script>
 
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
 <div
   class="absolute inset-0 z-50 flex max-h-screen w-full justify-end overflow-hidden bg-black/50"
   role="dialog"
   aria-modal="true"
   aria-labelledby="cart-title"
-  on:click={closeCart}
-  on:keydown={handleKeyDown}
+  onclick={closeCart}
+  onkeydown={handleKeyDown}
   tabindex="-1"
   data-testid="cart-overlay"
 >
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
   <div
     class="z-50 w-full bg-black p-6 md:w-1/2 lg:w-1/3 relative"
     role="document"
-    on:click|stopPropagation
+    onclick={(e) => e.stopPropagation()}
+    onkeydown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.stopPropagation();
+      }
+    }}
     data-testid="cart-content"
   >
     {#if loading}

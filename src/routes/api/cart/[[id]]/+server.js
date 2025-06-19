@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { createCart, loadCart, addToCart, updateCart, deleteCart } from '$utils/printify';
+import { createCart, loadCart, addToCart, updateCart, deleteCart } from '$utils/printify-server';
 
 // Handle all cart operations
 /** @type {import('./$types').RequestHandler} */

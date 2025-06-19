@@ -1,5 +1,4 @@
 import { error } from '@sveltejs/kit';
-import { printifyConfig } from './env';
 
 // Rate limiting configuration (30 requests per minute per shop)
 const RATE_LIMIT = {
@@ -56,14 +55,15 @@ function getRateLimiter(shopId) {
  * @param {'GET'|'POST'|'PUT'|'DELETE'} [options.method='GET'] - HTTP method
  * @param {Object} [options.body] - Request body (will be JSON.stringified)
  * @param {string} [options.shopId] - Optional shop ID override
+ * @param {Object} options.config - Printify configuration object with apiKey, shopId, and baseUrl
  * @returns {Promise<{status: number, body: any}>} - Response data
  * @throws {Error} If the request fails or rate limit is exceeded
  */
-export async function printifyFetch({ endpoint, method = 'GET', body, shopId: providedShopId }) {
+export async function printifyFetch({ endpoint, method = 'GET', body, shopId: providedShopId, config }) {
   try {
-    // Get API key and shop ID from environment
-    const apiKey = printifyConfig.apiKey;
-    const shopId = providedShopId || printifyConfig.shopId;
+    // Get API key and shop ID from config
+    const apiKey = config.apiKey;
+    const shopId = providedShopId || config.shopId;
     
     // Get rate limiter for this shop
     const limiter = getRateLimiter(shopId);
@@ -75,7 +75,9 @@ export async function printifyFetch({ endpoint, method = 'GET', body, shopId: pr
     
     // Process endpoint and create URL
     const processedEndpoint = endpoint.replace('{shop_id}', shopId);
-    const url = new URL(processedEndpoint, printifyConfig.baseUrl);
+    // Remove leading slash from endpoint if present
+    const cleanEndpoint = processedEndpoint.startsWith('/') ? processedEndpoint.slice(1) : processedEndpoint;
+    const url = new URL(`${config.baseUrl}/${cleanEndpoint}`);
 
     console.log(`[Printify API] ${method} ${url}`);
     
@@ -105,7 +107,7 @@ export async function printifyFetch({ endpoint, method = 'GET', body, shopId: pr
     };
   } catch (error) {
     console.error('Printify API Error:', {
-      endpoint: processedEndpoint,
+      endpoint: endpoint.replace('{shop_id}', providedShopId || config.shopId),
       method,
       error: error.message,
       status: error.status,
@@ -114,11 +116,12 @@ export async function printifyFetch({ endpoint, method = 'GET', body, shopId: pr
   }
 }
 
-export async function getProducts() {
+export async function getProducts(config) {
   try {
     const response = await printifyFetch({ 
-      endpoint: '/shops/{shop_id}/products.json',
-      method: 'GET'
+      endpoint: '/v1/shops/{shop_id}/products.json',
+      method: 'GET',
+      config
     });
     if (response.status === 200) {
       return response;
@@ -130,11 +133,12 @@ export async function getProducts() {
   }
 }
 
-export async function getProduct(productId) {
+export async function getProduct(productId, config) {
   try {
     const response = await printifyFetch({ 
-      endpoint: `/shops/{shop_id}/products/${productId}.json`,
-      method: 'GET'
+      endpoint: `/v1/shops/{shop_id}/products/${productId}.json`,
+      method: 'GET',
+      config
     });
     if (response.status === 200) {
       return response;
@@ -146,12 +150,13 @@ export async function getProduct(productId) {
   }
 }
 
-export async function createProduct(productData) {
+export async function createProduct(productData, config) {
   try {
     const response = await printifyFetch({
-      endpoint: '/shops/{shop_id}/products.json',
+      endpoint: '/v1/shops/{shop_id}/products.json',
       method: 'POST',
-      body: productData
+      body: productData,
+      config
     });
     if (response.status === 201) {
       return response;
@@ -163,12 +168,13 @@ export async function createProduct(productData) {
   }
 }
 
-export async function updateProduct(productId, productData) {
+export async function updateProduct(productId, productData, config) {
   try {
     const response = await printifyFetch({
-      endpoint: `/shops/{shop_id}/products/${productId}.json`,
+      endpoint: `/v1/shops/{shop_id}/products/${productId}.json`,
       method: 'PUT',
-      body: productData
+      body: productData,
+      config
     });
     if (response.status === 200) {
       return response;
@@ -180,11 +186,12 @@ export async function updateProduct(productId, productData) {
   }
 }
 
-export async function deleteProduct(productId) {
+export async function deleteProduct(productId, config) {
   try {
     const response = await printifyFetch({
-      endpoint: `/shops/{shop_id}/products/${productId}.json`,
-      method: 'DELETE'
+      endpoint: `/v1/shops/{shop_id}/products/${productId}.json`,
+      method: 'DELETE',
+      config
     });
     if (response.status === 200) {
       return response;
@@ -196,34 +203,36 @@ export async function deleteProduct(productId) {
   }
 }
 
-export async function createOrder(orderData) {
+export async function createOrder(orderData, config) {
   return printifyFetch({
-    endpoint: `/shops/{shop_id}/orders`,
+    endpoint: `/v1/shops/{shop_id}/orders`,
     method: 'POST',
-    body: orderData
+    body: orderData,
+    config
   });
 }
 
-export async function getOrders() {
-  return printifyFetch({ endpoint: `/shops/{shop_id}/orders` });
+export async function getOrders(config) {
+  return printifyFetch({ endpoint: `/v1/shops/{shop_id}/orders`, config });
 }
 
-export async function getOrder(orderId) {
-  return printifyFetch({ endpoint: `/shops/{shop_id}/orders/${orderId}` });
+export async function getOrder(orderId, config) {
+  return printifyFetch({ endpoint: `/v1/shops/{shop_id}/orders/${orderId}`, config });
 }
 
 // Cart functions - Note: Printify doesn't have a cart system like Shopify
 // These are simplified implementations for compatibility
-export async function createCart() {
+export async function createCart(config) {
   try {
     const response = await printifyFetch({
-      endpoint: '/shops/{shop_id}/carts.json',
+      endpoint: '/v1/shops/{shop_id}/carts.json',
       method: 'POST',
       body: {
         cart: {
           items: []
         }
-      }
+      },
+      config
     });
     if (response.status === 201) {
       return response;
@@ -235,11 +244,12 @@ export async function createCart() {
   }
 }
 
-export async function loadCart(cartId) {
+export async function loadCart(cartId, config) {
   try {
     const response = await printifyFetch({
-      endpoint: `/shops/{shop_id}/carts/${cartId}.json`,
-      method: 'GET'
+      endpoint: `/v1/shops/{shop_id}/carts/${cartId}.json`,
+      method: 'GET',
+      config
     });
     if (response.status === 200) {
       return response;
@@ -251,10 +261,10 @@ export async function loadCart(cartId) {
   }
 }
 
-export async function addToCart(cartId, variantId, quantity = 1) {
+export async function addToCart(cartId, variantId, quantity = 1, config) {
   try {
     const response = await printifyFetch({
-      endpoint: `/shops/{shop_id}/carts/${cartId}.json`,
+      endpoint: `/v1/shops/{shop_id}/carts/${cartId}.json`,
       method: 'PUT',
       body: {
         cart: {
@@ -265,7 +275,8 @@ export async function addToCart(cartId, variantId, quantity = 1) {
             }
           ]
         }
-      }
+      },
+      config
     });
     if (response.status === 200) {
       return response;
@@ -277,10 +288,10 @@ export async function addToCart(cartId, variantId, quantity = 1) {
   }
 }
 
-export async function updateCart(cartId, lines) {
+export async function updateCart(cartId, lines, config) {
   try {
     const response = await printifyFetch({
-      endpoint: `/shops/{shop_id}/carts/${cartId}.json`,
+      endpoint: `/v1/shops/{shop_id}/carts/${cartId}.json`,
       method: 'PUT',
       body: {
         cart: {
@@ -289,7 +300,8 @@ export async function updateCart(cartId, lines) {
             quantity: line.quantity
           }))
         }
-      }
+      },
+      config
     });
     if (response.status === 200) {
       return response;
@@ -301,11 +313,12 @@ export async function updateCart(cartId, lines) {
   }
 }
 
-export async function deleteCart(cartId) {
+export async function deleteCart(cartId, config) {
   try {
     const response = await printifyFetch({
-      endpoint: `/shops/{shop_id}/carts/${cartId}.json`,
-      method: 'DELETE'
+      endpoint: `/v1/shops/{shop_id}/carts/${cartId}.json`,
+      method: 'DELETE',
+      config
     });
     if (response.status === 200) {
       return response;
@@ -317,7 +330,7 @@ export async function deleteCart(cartId) {
   }
 }
 
-export async function getAllCollections() {
+export async function getAllCollections(config) {
   // Printify doesn't have collections like Shopify
   // You might want to create categories or tags instead
   return {

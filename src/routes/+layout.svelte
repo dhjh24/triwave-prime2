@@ -5,7 +5,7 @@
   import ShoppingCart from '$components/ShoppingCart.svelte';
   import { getCartItems } from '../store';
   import { onMount } from 'svelte';
-  import { createCart } from '$utils/printify';
+  import { createCart } from '$utils/cart-client';
   /** @type {{children?: import('svelte').Snippet}} */
   let { children } = $props();
 

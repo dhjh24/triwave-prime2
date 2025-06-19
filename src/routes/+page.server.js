@@ -1,4 +1,4 @@
-import { getProducts } from '$utils/printify';
+import { getProducts } from '$utils/printify-server';
 import { error } from '@sveltejs/kit';
 
 /** @type {import('./$types').RequestHandler} */

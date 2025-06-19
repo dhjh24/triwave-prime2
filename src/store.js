@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import { loadCart } from '$utils/printify';
+import { loadCart } from '$utils/cart-client';
 
 export const cartQuantity = writable('');
 export const cart = writable([]);

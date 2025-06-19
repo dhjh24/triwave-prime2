@@ -1,4 +1,4 @@
-import { createCart, addToCart, updateCart } from '../../utils/printify.js';
+import { createCart, addToCart, updateCart } from '../../utils/printify-server.js';
 import { error } from '@sveltejs/kit';
 
 export async function POST() {

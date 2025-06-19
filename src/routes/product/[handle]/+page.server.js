@@ -1,4 +1,4 @@
-import { getProduct, getProducts } from '$utils/printify';
+import { getProduct, getProducts } from '$utils/printify-server';
 import { error } from '@sveltejs/kit';
 
 export async function load({ params }) {
